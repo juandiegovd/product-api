@@ -52,7 +52,7 @@ describe('ProductService', () => {
     );
   });
 
-  it('should fetch and upsert products', () => {
+  it('should fetch and upsert products', async () => {
     const fakeContentData = {
       sys: { id: 'ASDFCBBN' },
       fields: { name: 'Test 1' },
@@ -68,7 +68,7 @@ describe('ProductService', () => {
     contentRepository.findOneBy = jest.fn().mockResolvedValue(null);
     contentRepository.upsert = jest.fn();
 
-    service.syncProducts();
+    await service.syncProducts();
     expect(httpService.get).toHaveBeenCalled();
     expect(contentRepository.upsert).toHaveBeenCalled();
   });
