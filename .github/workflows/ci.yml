@@ -50,4 +50,5 @@ jobs:
       - name: Run e2e tests
         run: npm run test:e2e -- --runInBand
         env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
           NODE_ENV: test
