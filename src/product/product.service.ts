@@ -19,7 +19,7 @@ export class ProductService {
 
     private readonly logger = new Logger(ProductService.name);
 
-    public async syncProducts() {
+    public syncProducts() {
         this.logger.debug('Syncing products from Contentful API');
         const spaceId = this.configService.get<string>('CONTENTFUL_SPACE_ID');
         const accessToken = this.configService.get<string>('CONTENTFUL_ACCESS_TOKEN');
@@ -30,10 +30,9 @@ export class ProductService {
 
         this.httpService.get<IContentfulResponse>(url)
         .pipe(
-            catchError((e) => {
+            catchError(() => {
                 this.logger.error('Error fetching products from Contentful API');
-                this.logger.error(e.message);
-                throw 'Error fetching products';
+                throw new BadRequestException('Error fetching products');
             }),
             map(response => response.data.items.map(item => Content.create(item))),
             mergeMap(async (items) => {
@@ -70,6 +69,6 @@ export class ProductService {
     public async deleteProduct(id: number) {
         const product = await this.contentRepository.findOneBy({id});
         if (!product) throw new BadRequestException(`Product with id ${id} does not exist`);
-        this.contentRepository.update({id}, {active: false});
+        await this.contentRepository.update({id}, {active: false});
     }
 }

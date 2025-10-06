@@ -76,7 +76,7 @@ describe('ProductService', () => {
     contentRepository.findOneBy = jest.fn().mockResolvedValue({id: 1, contentId: "ASDFCBBN", name: "Test 0", active: false});
     contentRepository.upsert = jest.fn();
 
-    await service.syncProducts();
+    service.syncProducts();
     expect(httpService.get).toHaveBeenCalled();
     expect(contentRepository.upsert).toHaveBeenCalledTimes(0);
   });
