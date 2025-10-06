@@ -49,3 +49,5 @@ jobs:
 
       - name: Run e2e tests
         run: npm run test:e2e -- --runInBand
+        env:
+          NODE_ENV: test
