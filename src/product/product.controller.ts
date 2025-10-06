@@ -11,8 +11,8 @@ export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Cron('0 * * * *')
-  syncProducts() {
-    this.productService.syncProducts();
+  async syncProducts() {
+    await this.productService.syncProducts();
   }
 
   @Get()

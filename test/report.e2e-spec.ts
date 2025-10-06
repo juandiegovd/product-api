@@ -9,9 +9,10 @@ import { Repository } from 'typeorm';
 import { AuthModule } from '../src/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import contentfulApiConfig from '../src/config/contentful-api.config';
+import { App } from 'supertest/types';
 
 describe('Report Controller (e2e)', () => {
-  let app: INestApplication;
+  let app: INestApplication<App>;
   let repository: Repository<Content>;
   let token: string;
 
@@ -96,7 +97,8 @@ describe('Report Controller (e2e)', () => {
       .post('/auth/login')
       .send({ username: 'admin', password: 'admin' })
       .expect(201);
-    token = authResponse.body.accessToken;
+    const body = authResponse.body as { accessToken: string };
+    token = body.accessToken;
   });
 
   afterAll(async () => {
