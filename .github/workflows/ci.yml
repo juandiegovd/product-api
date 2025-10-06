@@ -30,6 +30,7 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     needs: lint
+    environment: develop
 
     steps:
       - name: Checkout code
