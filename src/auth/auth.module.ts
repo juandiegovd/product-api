@@ -13,15 +13,15 @@ import { AuthGuard } from './auth.guard';
         global: true,
         signOptions: { expiresIn: '60m' },
       }),
-    })
+    }),
   ],
   controllers: [AuthController],
   providers: [
     AuthService,
     {
       provide: APP_GUARD,
-      useClass: AuthGuard
-    }
-  ]
+      useClass: AuthGuard,
+    },
+  ],
 })
 export class AuthModule {}

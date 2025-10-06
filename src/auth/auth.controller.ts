@@ -5,11 +5,11 @@ import { LoginRequest } from './dto/login.request';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
-    @Post('login')
-    @Public()
-    async logIn(@Body() request: LoginRequest): Promise<any> {
-        return await this.authService.signIn(request.username, request.password);
-    }
+  @Post('login')
+  @Public()
+  async logIn(@Body() request: LoginRequest): Promise<any> {
+    return await this.authService.signIn(request.username, request.password);
+  }
 }

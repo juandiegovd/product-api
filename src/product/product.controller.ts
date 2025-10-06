@@ -8,21 +8,23 @@ import { Public } from '@common/decorators/public.decorator';
 @Controller('product')
 @Public()
 export class ProductController {
-    constructor(private readonly productService: ProductService) {}
+  constructor(private readonly productService: ProductService) {}
 
-    @Cron('0 * * * *')
-    syncProducts() {
-        this.productService.syncProducts();
-    }
+  @Cron('0 * * * *')
+  syncProducts() {
+    this.productService.syncProducts();
+  }
 
-    @Get()
-    async getProducts(@Query() query: ProductQuery,
-                        @Query() pagination: PaginationQuery) {
-        return await this.productService.getAllProducts(query, pagination);
-    }
+  @Get()
+  async getProducts(
+    @Query() query: ProductQuery,
+    @Query() pagination: PaginationQuery,
+  ) {
+    return await this.productService.getAllProducts(query, pagination);
+  }
 
-    @Delete(':id')
-    async deleteProduct(@Param('id') id: number) {
-        await this.productService.deleteProduct(id);
-    }
+  @Delete(':id')
+  async deleteProduct(@Param('id') id: number) {
+    await this.productService.deleteProduct(id);
+  }
 }

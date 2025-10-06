@@ -15,65 +15,83 @@ describe('ProductService', () => {
   let contentRepository: Repository<Content>;
 
   const mockConfig = {
-    get: jest.fn((key)=>{
-      switch(key){
-        case 'CONTENTFUL_SPACE_ID': return 'contentful_space_id';
-        case 'CONTENTFUL_ACCESS_TOKEN': return 'contentful_access_token';
-        case 'CONTENTFUL_ENVIRONMENT': return 'contentful_environment';
-        case 'CONTENFTUL_CONTENT_TYPE': return 'contentful_content_type';
+    get: jest.fn((key) => {
+      switch (key) {
+        case 'CONTENTFUL_SPACE_ID':
+          return 'contentful_space_id';
+        case 'CONTENTFUL_ACCESS_TOKEN':
+          return 'contentful_access_token';
+        case 'CONTENTFUL_ENVIRONMENT':
+          return 'contentful_environment';
+        case 'CONTENFTUL_CONTENT_TYPE':
+          return 'contentful_content_type';
       }
-    })
-  }
+    }),
+  };
 
   const mockRepository = {
     findOneBy: jest.fn(),
     upsert: jest.fn(),
-    update: jest.fn()
-  }
+    update: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        ProductService, 
-        {provide: ConfigService, useValue: mockConfig}, 
-        {provide: HttpService, useValue: {get: jest.fn()}},
-        {provide: getRepositoryToken(Content), useValue: mockRepository}],
+        ProductService,
+        { provide: ConfigService, useValue: mockConfig },
+        { provide: HttpService, useValue: { get: jest.fn() } },
+        { provide: getRepositoryToken(Content), useValue: mockRepository },
+      ],
     }).compile();
 
     service = module.get<ProductService>(ProductService);
     httpService = module.get<HttpService>(HttpService);
-    contentRepository = module.get<Repository<Content>>(getRepositoryToken(Content));
+    contentRepository = module.get<Repository<Content>>(
+      getRepositoryToken(Content),
+    );
   });
 
-  it('should fetch and upsert products', async () => {
-    const fakeContentData = { sys: { id: "ASDFCBBN" }, fields: {name: 'Test 1'} }
+  it('should fetch and upsert products', () => {
+    const fakeContentData = {
+      sys: { id: 'ASDFCBBN' },
+      fields: { name: 'Test 1' },
+    };
     const fakeContentResponse: AxiosResponse = {
-      data: {items: [fakeContentData]},
+      data: { items: [fakeContentData] },
       status: 200,
-      statusText: "",
+      statusText: '',
       headers: {},
-      config: { headers: new AxiosHeaders()}
+      config: { headers: new AxiosHeaders() },
     };
     jest.spyOn(httpService, 'get').mockReturnValue(of(fakeContentResponse));
     contentRepository.findOneBy = jest.fn().mockResolvedValue(null);
     contentRepository.upsert = jest.fn();
 
-    await service.syncProducts();
+    service.syncProducts();
     expect(httpService.get).toHaveBeenCalled();
     expect(contentRepository.upsert).toHaveBeenCalled();
   });
 
-  it('should fetch and not upsert inactive products', async () => {
-    const fakeContentData = { sys: { id: "ASDFCBBN" }, fields: {name: 'Test 1'} }
+  it('should fetch and not upsert inactive products', () => {
+    const fakeContentData = {
+      sys: { id: 'ASDFCBBN' },
+      fields: { name: 'Test 1' },
+    };
     const fakeContentResponse: AxiosResponse = {
-      data: {items: [fakeContentData]},
+      data: { items: [fakeContentData] },
       status: 200,
-      statusText: "",
+      statusText: '',
       headers: {},
-      config: { headers: new AxiosHeaders()}
+      config: { headers: new AxiosHeaders() },
     };
     jest.spyOn(httpService, 'get').mockReturnValue(of(fakeContentResponse));
-    contentRepository.findOneBy = jest.fn().mockResolvedValue({id: 1, contentId: "ASDFCBBN", name: "Test 0", active: false});
+    contentRepository.findOneBy = jest.fn().mockResolvedValue({
+      id: 1,
+      contentId: 'ASDFCBBN',
+      name: 'Test 0',
+      active: false,
+    });
     contentRepository.upsert = jest.fn();
 
     service.syncProducts();
@@ -82,13 +100,20 @@ describe('ProductService', () => {
   });
 
   it('should delete existing product', async () => {
-    contentRepository.findOneBy = jest.fn().mockReturnValue({id: 1, contentId: 'ASDFGS', name: 'Test 1', active: true});
+    contentRepository.findOneBy = jest.fn().mockReturnValue({
+      id: 1,
+      contentId: 'ASDFGS',
+      name: 'Test 1',
+      active: true,
+    });
     await service.deleteProduct(1);
     expect(contentRepository.update).toHaveBeenCalled();
   });
 
   it('should throw error when id does not exist for deletion', async () => {
     contentRepository.findOneBy = jest.fn();
-    expect(service.deleteProduct(129483)).rejects.toThrow(BadRequestException);
+    await expect(service.deleteProduct(129483)).rejects.toThrow(
+      BadRequestException,
+    );
   });
 });
