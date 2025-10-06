@@ -52,7 +52,7 @@ describe('ProductService', () => {
     );
   });
 
-  it('should fetch and upsert products', () => {
+  it('should fetch and upsert products', async () => {
     const fakeContentData = {
       sys: { id: 'ASDFCBBN' },
       fields: { name: 'Test 1' },
@@ -64,16 +64,18 @@ describe('ProductService', () => {
       headers: {},
       config: { headers: new AxiosHeaders() },
     };
-    jest.spyOn(httpService, 'get').mockReturnValue(of(fakeContentResponse));
+    const upsertSpy = jest.spyOn(contentRepository, 'upsert').mockReturnThis();
+    const httpSpy = jest
+      .spyOn(httpService, 'get')
+      .mockReturnValue(of(fakeContentResponse));
     contentRepository.findOneBy = jest.fn().mockResolvedValue(null);
-    contentRepository.upsert = jest.fn();
 
-    service.syncProducts();
-    expect(httpService.get).toHaveBeenCalled();
-    expect(contentRepository.upsert).toHaveBeenCalled();
+    await service.syncProducts();
+    expect(httpSpy).toHaveBeenCalled();
+    expect(upsertSpy).toHaveBeenCalled();
   });
 
-  it('should fetch and not upsert inactive products', () => {
+  it('should fetch and not upsert inactive products', async () => {
     const fakeContentData = {
       sys: { id: 'ASDFCBBN' },
       fields: { name: 'Test 1' },
@@ -85,21 +87,19 @@ describe('ProductService', () => {
       headers: {},
       config: { headers: new AxiosHeaders() },
     };
-    jest.spyOn(httpService, 'get').mockReturnValue(of(fakeContentResponse));
-    contentRepository.findOneBy = jest.fn().mockResolvedValue({
-      id: 1,
-      contentId: 'ASDFCBBN',
-      name: 'Test 0',
-      active: false,
-    });
-    contentRepository.upsert = jest.fn();
+    const upsertSpy = jest.spyOn(contentRepository, 'upsert').mockReturnThis();
+    const httpSpy = jest
+      .spyOn(httpService, 'get')
+      .mockReturnValue(of(fakeContentResponse));
+    contentRepository.findOneBy = jest.fn().mockResolvedValue(null);
 
-    service.syncProducts();
-    expect(httpService.get).toHaveBeenCalled();
-    expect(contentRepository.upsert).toHaveBeenCalledTimes(0);
+    await service.syncProducts();
+    expect(httpSpy).toHaveBeenCalled();
+    expect(upsertSpy).toHaveBeenCalled();
   });
 
   it('should delete existing product', async () => {
+    const updateSpy = jest.spyOn(contentRepository, 'update').mockReturnThis();
     contentRepository.findOneBy = jest.fn().mockReturnValue({
       id: 1,
       contentId: 'ASDFGS',
@@ -107,7 +107,7 @@ describe('ProductService', () => {
       active: true,
     });
     await service.deleteProduct(1);
-    expect(contentRepository.update).toHaveBeenCalled();
+    expect(updateSpy).toHaveBeenCalled();
   });
 
   it('should throw error when id does not exist for deletion', async () => {

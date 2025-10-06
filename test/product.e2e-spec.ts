@@ -9,9 +9,14 @@ import { ConfigModule } from '@nestjs/config';
 import contentfulApiConfig from '../src/config/contentful-api.config';
 import { ProductModule } from '../src/product/product.module';
 import { GlobalModule } from '../src/http/http-interceptor.module';
+import { App } from 'supertest/types';
+
+interface ContentIdentifier {
+  id: number;
+}
 
 describe('ProductController (e2e)', () => {
-  let app: INestApplication;
+  let app: INestApplication<App>;
   let repository: Repository<Content>;
 
   beforeAll(async () => {
@@ -97,9 +102,10 @@ describe('ProductController (e2e)', () => {
         limit: 5,
       })
       .expect(200);
-    expect(response.body).toHaveLength(2);
-    expect(response.body[0].brand).toEqual('Jeep');
-    expect(response.body[1].brand).toEqual('Ford');
+    const body = response.body as Content[];
+    expect(body).toHaveLength(2);
+    expect(body[0].brand).toEqual('Jeep');
+    expect(body[1].brand).toEqual('Ford');
   });
 
   it('should delete product', async () => {
@@ -113,16 +119,16 @@ describe('ProductController (e2e)', () => {
         limit: 5,
       })
       .expect(200);
-    expect(response.body).toHaveLength(2);
-    expect(response.body[0].brand).toEqual('Jeep');
-    expect(response.body[1].brand).toEqual('Ford');
+    const body = response.body as Content[];
+    expect(body).toHaveLength(2);
+    expect(body[0].brand).toEqual('Jeep');
+    expect(body[1].brand).toEqual('Ford');
 
-    const resultId = await repository.query(
+    const resultId: ContentIdentifier[] = await repository.query(
       "SELECT id FROM content where brand = 'Jeep'",
     );
-    await request(app.getHttpServer())
-      .delete(`/product/${resultId[0].id}`)
-      .expect(200);
+    const [{ id }] = resultId;
+    await request(app.getHttpServer()).delete(`/product/${id}`).expect(200);
 
     const responseAfterDelete = await request(app.getHttpServer())
       .get('/product')
@@ -134,7 +140,8 @@ describe('ProductController (e2e)', () => {
         limit: 5,
       })
       .expect(200);
-    expect(responseAfterDelete.body).toHaveLength(1);
-    expect(responseAfterDelete.body[0].brand).toEqual('Ford');
+    const afterDeleteBody = responseAfterDelete.body as Content[];
+    expect(afterDeleteBody).toHaveLength(1);
+    expect(afterDeleteBody[0].brand).toEqual('Ford');
   });
 });

@@ -45,11 +45,12 @@ export class ReportService {
   }
 
   public async getAveragePriceOfActiveProducts(): Promise<number> {
-    const result = await this.contentRepository
+    const result: { avg?: string } | undefined = await this.contentRepository
       .createQueryBuilder('content')
       .select('AVG(content.price)', 'avg')
       .where('content.active = :active', { active: true })
       .getRawOne();
-    return Math.round(parseFloat(result.avg) * 100) / 100;
+    const avg = result?.avg ? parseFloat(result.avg) : 0;
+    return Math.round(avg * 100) / 100;
   }
 }

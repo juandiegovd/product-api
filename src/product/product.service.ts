@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { catchError, map, mergeMap } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { IContentfulResponse } from './dto/contentful.response';
 import { Content } from '../entities/content.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -20,7 +20,7 @@ export class ProductService {
 
   private readonly logger = new Logger(ProductService.name);
 
-  public syncProducts() {
+  public async syncProducts() {
     this.logger.debug('Syncing products from Contentful API');
     const spaceId = this.configService.get<string>('CONTENTFUL_SPACE_ID');
     const accessToken = this.configService.get<string>(
@@ -35,31 +35,29 @@ export class ProductService {
 
     const url = `https://cdn.contentful.com/spaces/${spaceId}/environments/${environment}/entries?access_token=${accessToken}&content_type=${contentType}`;
 
-    this.httpService
-      .get<IContentfulResponse>(url)
-      .pipe(
-        catchError(() => {
-          this.logger.error('Error fetching products from Contentful API');
-          throw new BadRequestException('Error fetching products');
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<IContentfulResponse>(url),
+      );
+
+      const items = response.data.items.map((item) => Content.create(item));
+
+      await Promise.all(
+        items.map(async (item) => {
+          const existingItem = await this.contentRepository.findOneBy({
+            contentId: item.contentId,
+          });
+          if (!(existingItem && existingItem.active === false)) {
+            await this.contentRepository.upsert(item, ['contentId']);
+          }
         }),
-        map((response) =>
-          response.data.items.map((item) => Content.create(item)),
-        ),
-        mergeMap(async (items) => {
-          await Promise.all(
-            items.map(async (item) => {
-              const existingItem = await this.contentRepository.findOneBy({
-                contentId: item.contentId,
-              });
-              if (!(existingItem && existingItem.active === false)) {
-                await this.contentRepository.upsert(item, ['contentId']);
-              }
-            }),
-          );
-          this.logger.debug('Products synced successfully');
-        }),
-      )
-      .subscribe();
+      );
+
+      this.logger.debug('Products synced successfully');
+    } catch {
+      this.logger.error('Error fetching products from Contentful API');
+      throw new BadRequestException('Error fetching products');
+    }
   }
 
   public async getAllProducts(
