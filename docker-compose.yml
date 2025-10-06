@@ -1,0 +1,32 @@
+services:
+  productdb:
+    image: postgres:15
+    container_name: productdb
+    restart: always
+    environment:
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_DB}
+    ports:
+    - "5432:5432"
+    volumes:
+    - postgres_data:/var/lib/postgresql/data
+  
+  nest-app:
+    build: .
+    restart: always
+    depends_on:
+      - productdb
+    ports:
+    - "3000:3000"
+    environment:
+      CONTENTFUL_SPACE_ID: ${CONTENTFUL_SPACE_ID}
+      CONTENTFUL_ACCESS_TOKEN: ${CONTENTFUL_ACCESS_TOKEN}
+      CONTENTFUL_ENVIRONMENT: ${CONTENTFUL_ENVIRONMENT}
+      CONTENTFUL_CONTENT_TYPE: ${CONTENTFUL_CONTENT_TYPE}
+      DATABASE_URL: postgres://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@productdb:5432/${DATABASE_DB}
+      JWT_SECRET: ${JWT_SECRET}
+
+volumes:
+  postgres_data:
+    driver: local
